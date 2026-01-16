@@ -1,9 +1,3 @@
-<%-- 
-    Document   : become_seller
-    Created on : Dec 30, 2025, 2:05:51 AM
-    Author     : Afifah Isnarudin
---%>
-
 <%@page import="com.marketplace.model.User"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%
@@ -28,6 +22,15 @@
             <p class="text-slate-400 font-medium text-sm mt-2">Re-enter your <%= user.getIdType() %> ID to activate your shop.</p>
         </div>
 
+        <%-- Display error messages --%>
+        <% 
+            String errorMsg = (String) request.getAttribute("errorMsg");
+            if (errorMsg != null) { %>
+                <div class="bg-red-50 text-red-600 p-4 rounded-2xl mb-8 text-center text-xs font-bold border border-red-100">
+                    <i class="fas fa-exclamation-circle mr-2"></i> <%= errorMsg %>
+                </div>
+        <% } %>
+
         <form action="ProfileServlet" method="POST" enctype="multipart/form-data" class="space-y-8">
             <input type="hidden" name="action" value="activate_seller">
             
@@ -41,7 +44,8 @@
             <div class="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100">
                 <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-3 ml-1">DuitNow QR (Optional)</label>
                 <input type="file" name="qrPhoto" 
-                       class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-white file:text-indigo-600 hover:file:bg-indigo-100 transition">
+                       class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl 
+                       file:border-0 file:text-[10px] file:font-black file:bg-white file:text-indigo-600 hover:file:bg-indigo-100 transition">
                 <p class="text-[10px] text-slate-400 font-bold mt-3 leading-relaxed italic">* If skipped, customers can only pay via Cash (COD).</p>
             </div>
 
