@@ -29,28 +29,22 @@ public class ProfileServlet extends HttpServlet {
             if ("activate_seller".equals(action)) {
                 String verifyId = request.getParameter("verifyId");
                 
-                // 1. Verify that the entered ID matches the logged-in user's ID
                 if (user.getIdentificationNo() != null && user.getIdentificationNo().equals(verifyId)) {
-                    String qrFileName = user.getPaymentQr(); // Keep existing if any
+                    String qrFileName = user.getPaymentQr(); 
                     
-                    // 2. Handle QR Photo Upload
-                    try {
-                        Part part = request.getPart("qrPhoto");
-                        if (part != null && part.getSubmittedFileName() != null && !part.getSubmittedFileName().isEmpty()) {
-                            String appPath = request.getServletContext().getRealPath("/");
-                            String savePath = appPath.endsWith(File.separator) ? appPath + "uploads" : appPath + File.separator + "uploads";
-                            
-                            File fileSaveDir = new File(savePath);
-                            if (!fileSaveDir.exists()) fileSaveDir.mkdirs();
-                            
-                            qrFileName = "qr_" + user.getUserId() + "_" + part.getSubmittedFileName();
-                            part.write(savePath + File.separator + qrFileName);
-                        }
-                    } catch (Exception e) {
-                        // Optional: log error but proceed if file is optional
+                    Part part = request.getPart("qrPhoto");
+                    if (part != null && part.getSubmittedFileName() != null && !part.getSubmittedFileName().isEmpty()) {
+                        // FIXED: Use a more reliable way to get the absolute path
+                        String appPath = request.getServletContext().getRealPath("");
+                        String savePath = appPath + File.separator + "uploads";
+                        
+                        File fileSaveDir = new File(savePath);
+                        if (!fileSaveDir.exists()) fileSaveDir.mkdirs();
+                        
+                        qrFileName = "qr_" + user.getUserId() + "_" + System.currentTimeMillis() + "_" + part.getSubmittedFileName();
+                        part.write(savePath + File.separator + qrFileName);
                     }
 
-                    // 3. Update Database to activate seller mode
                     if (dao.activateSeller(user.getUserId(), qrFileName)) {
                         user.setIsSeller(true);
                         user.setPaymentQr(qrFileName);
@@ -68,14 +62,14 @@ public class ProfileServlet extends HttpServlet {
                 return;
             }
 
-            // --- Default Profile Update Logic ---
+            // --- Profile Update with Password Confirmation ---
             String name = request.getParameter("name");
             String phone = request.getParameter("phone");
             String password = request.getParameter("password");
             String confirmPassword = request.getParameter("confirmPassword");
 
             if (password != null && !password.equals(confirmPassword)) {
-                request.setAttribute("errorMsg", "Passwords do not match. Please try again.");
+                request.setAttribute("errorMsg", "Passwords do not match.");
                 request.getRequestDispatcher("edit-profile.jsp").forward(request, response);
                 return;
             }
@@ -87,13 +81,10 @@ public class ProfileServlet extends HttpServlet {
                 session.setAttribute("loggedUser", user);
                 session.setAttribute("successMsg", "Profile information saved");
                 response.sendRedirect("edit-profile.jsp");
-            } else {
-                request.setAttribute("errorMsg", "Failed to update profile. Database error.");
-                request.getRequestDispatcher("edit-profile.jsp").forward(request, response);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect("dashboard.jsp?error=InvalidInput");
+            e.printStackTrace(); // Logs the actual error to the server console for debugging
+            response.sendRedirect("dashboard.jsp?error=UploadError");
         }
     }
 }
