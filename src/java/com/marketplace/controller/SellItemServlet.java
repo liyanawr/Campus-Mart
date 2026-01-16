@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.marketplace.controller;
 
 import com.marketplace.dao.ItemDAO;
@@ -14,11 +9,6 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
-
-/**
- *
- * @author Afifah Isnarudin
- */
 
 @WebServlet("/SellItemServlet")
 @MultipartConfig(fileSizeThreshold=1024*1024*2, maxFileSize=1024*1024*10, maxRequestSize=1024*1024*50)
@@ -34,12 +24,22 @@ public class SellItemServlet extends HttpServlet {
         }
 
         try {
-            // FIXED: Deployment-safe absolute path resolution
             String appPath = request.getServletContext().getRealPath("/");
             String savePath = appPath.endsWith(File.separator) ? appPath + "uploads" : appPath + File.separator + "uploads";
             
             File fileSaveDir = new File(savePath);
             if (!fileSaveDir.exists()) fileSaveDir.mkdirs();
+
+            // Price Validation
+            String priceStr = request.getParameter("price");
+            double price = 0.0;
+            try {
+                price = Double.parseDouble(priceStr.replaceAll("[^0-9.]", ""));
+                if (price <= 0) throw new Exception();
+            } catch (Exception e) {
+                response.sendRedirect("sell-item.jsp?error=InvalidPrice");
+                return;
+            }
 
             // Handle Image Part
             String fileName = "default.png";
@@ -50,28 +50,22 @@ public class SellItemServlet extends HttpServlet {
                     part.write(savePath + File.separator + fileName);
                 }
             } catch (Exception e) {
-                // If upload component fails, use default image instead of crashing
+                response.sendRedirect("sell-item.jsp?error=UploadError");
+                return;
             }
 
             Item item = new Item();
             item.setItemName(request.getParameter("itemName"));
             item.setDescription(request.getParameter("description"));
-            
-            // Safe Numeric Parsing
-            String priceStr = request.getParameter("price");
-            String catStr = request.getParameter("categoryId");
-            String qtyStr = request.getParameter("qty");
-
-            item.setPrice(parsePrice(priceStr));
-            item.setCategoryId(parseInteger(catStr, 5)); 
-            item.setQty(parseInteger(qtyStr, 1)); 
-            
+            item.setPrice(price);
+            item.setCategoryId(parseInteger(request.getParameter("categoryId"), 5)); 
+            item.setQty(parseInteger(request.getParameter("qty"), 1)); 
             item.setPreferredPayment(request.getParameter("preferredPayment"));
             item.setItemPhoto(fileName);
             item.setSellerId(user.getUserId());
 
             if (new ItemDAO().addItem(item)) {
-                response.sendRedirect("seller_dashboard.jsp?msg=Success");
+                response.sendRedirect("seller_dashboard.jsp?msg=AddSuccess");
             } else {
                 response.sendRedirect("sell-item.jsp?error=DbError");
             }
@@ -79,13 +73,6 @@ public class SellItemServlet extends HttpServlet {
             e.printStackTrace(); 
             response.sendRedirect("sell-item.jsp?error=InvalidInput");
         }
-    }
-
-    private double parsePrice(String val) {
-        if (val == null || val.trim().isEmpty()) return 0.0;
-        try {
-            return Double.parseDouble(val.replaceAll("[^0-9.]", ""));
-        } catch (Exception e) { return 0.0; }
     }
 
     private int parseInteger(String val, int defaultVal) {
