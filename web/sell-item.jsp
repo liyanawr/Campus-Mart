@@ -1,9 +1,3 @@
-<%-- 
-    Document   : sell-item
-    Created on : Nov 18, 2025, 8:54:48 PM
-    Author     : Afifah Isnarudin
---%>
-
 <%@page import="com.marketplace.model.User"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%
@@ -21,6 +15,19 @@
     <div class="bg-white w-full max-w-2xl rounded-[2.5rem] p-10 md:p-14 shadow-2xl">
         <h1 class="text-3xl font-black text-slate-900 mb-2">Create Listing</h1>
         <p class="text-slate-400 font-medium mb-10">Fill in details to start selling.</p>
+
+        <%-- Error Alerts --%>
+        <% 
+            String error = request.getParameter("error");
+            if ("InvalidPrice".equals(error)) { %>
+                <div class="bg-red-50 text-red-600 p-4 rounded-2xl mb-8 text-center text-sm font-bold border border-red-100">
+                    <i class="fas fa-exclamation-circle mr-2"></i> Price must be a valid number
+                </div>
+        <%  } else if ("UploadError".equals(error)) { %>
+                <div class="bg-red-50 text-red-600 p-4 rounded-2xl mb-8 text-center text-sm font-bold border border-red-100">
+                    <i class="fas fa-camera mr-2"></i> Failed to upload image. Please try again
+                </div>
+        <%  } %>
 
         <form action="SellItemServlet" method="POST" enctype="multipart/form-data" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
