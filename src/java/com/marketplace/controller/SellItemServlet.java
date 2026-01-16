@@ -3,8 +3,7 @@ package com.marketplace.controller;
 import com.marketplace.dao.ItemDAO;
 import com.marketplace.model.Item;
 import com.marketplace.model.User;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
@@ -24,48 +23,53 @@ public class SellItemServlet extends HttpServlet {
         }
 
         try {
-            String appPath = request.getServletContext().getRealPath("/");
-            String savePath = appPath.endsWith(File.separator) ? appPath + "uploads" : appPath + File.separator + "uploads";
+            // Define your absolute path clearly
+            String savePath = "C:\\Users\\Nadiratul Liyana\\Documents\\UITM DEGREE\\sem 4 classes\\CSC584\\StudentMarketplace\\web\\uploads";
             
             File fileSaveDir = new File(savePath);
-            if (!fileSaveDir.exists()) fileSaveDir.mkdirs();
-
-            // Price Validation
-            String priceStr = request.getParameter("price");
-            double price = 0.0;
-            try {
-                price = Double.parseDouble(priceStr.replaceAll("[^0-9.]", ""));
-                if (price <= 0) throw new Exception();
-            } catch (Exception e) {
-                response.sendRedirect("sell-item.jsp?error=InvalidPrice");
-                return;
+            if (!fileSaveDir.exists()) {
+                fileSaveDir.mkdirs();
             }
 
-            // Handle Image Part
+            String priceStr = request.getParameter("price");
+            double price = Double.parseDouble(priceStr.replaceAll("[^0-9.]", ""));
+
             String fileName = "default.png";
-            try {
-                Part part = request.getPart("itemPhoto");
-                if (part != null && part.getSubmittedFileName() != null && !part.getSubmittedFileName().isEmpty()) {
-                    fileName = part.getSubmittedFileName();
-                    part.write(savePath + File.separator + fileName);
+            Part part = request.getPart("itemPhoto");
+            
+            if (part != null && part.getSubmittedFileName() != null && !part.getSubmittedFileName().isEmpty()) {
+                fileName = System.currentTimeMillis() + "_" + part.getSubmittedFileName();
+                File fileToSave = new File(fileSaveDir, fileName);
+                
+                // MANUAL STREAMING FIX: Avoids the GlassFish doubled path error
+                try (InputStream input = part.getInputStream();
+                     OutputStream output = new FileOutputStream(fileToSave)) {
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = input.read(buffer)) != -1) {
+                        output.write(buffer, 0, bytesRead);
+                    }
+                } catch (IOException io) {
+                    System.err.println("Streaming Error to: " + fileToSave.getAbsolutePath());
+                    io.printStackTrace();
+                    response.sendRedirect("sell-item.jsp?error=UploadError");
+                    return;
                 }
-            } catch (Exception e) {
-                response.sendRedirect("sell-item.jsp?error=UploadError");
-                return;
             }
 
             Item item = new Item();
             item.setItemName(request.getParameter("itemName"));
             item.setDescription(request.getParameter("description"));
             item.setPrice(price);
-            item.setCategoryId(parseInteger(request.getParameter("categoryId"), 5)); 
-            item.setQty(parseInteger(request.getParameter("qty"), 1)); 
+            item.setCategoryId(Integer.parseInt(request.getParameter("categoryId"))); 
+            item.setQty(Integer.parseInt(request.getParameter("qty"))); 
             item.setPreferredPayment(request.getParameter("preferredPayment"));
             item.setItemPhoto(fileName);
             item.setSellerId(user.getUserId());
 
             if (new ItemDAO().addItem(item)) {
-                response.sendRedirect("seller_dashboard.jsp?msg=AddSuccess");
+                session.setAttribute("successMsg", "Item listed successfully!");
+                response.sendRedirect("seller_dashboard.jsp");
             } else {
                 response.sendRedirect("sell-item.jsp?error=DbError");
             }
@@ -73,12 +77,5 @@ public class SellItemServlet extends HttpServlet {
             e.printStackTrace(); 
             response.sendRedirect("sell-item.jsp?error=InvalidInput");
         }
-    }
-
-    private int parseInteger(String val, int defaultVal) {
-        if (val == null || val.trim().isEmpty()) return defaultVal;
-        try {
-            return Integer.parseInt(val.replaceAll("[^0-9]", ""));
-        } catch (Exception e) { return defaultVal; }
     }
 }
