@@ -36,26 +36,20 @@
 
     <div class="max-w-7xl mx-auto px-10 py-12">
         
-        <%-- Session Message Logic --%>
+        <%-- Display Session Messages (Success) --%>
         <% 
             String successMsg = (String) session.getAttribute("successMsg");
-            String msgParam = request.getParameter("msg"); // Backward compatibility for previous updates
-            if (successMsg != null || "AddSuccess".equals(msgParam) || "Updated".equals(msgParam) || "DeleteSuccess".equals(msgParam)) { 
-                String display = successMsg;
-                if(display == null) {
-                    if("AddSuccess".equals(msgParam)) display = "Item listed successfully in the marketplace!";
-                    else if("Updated".equals(msgParam)) display = "Item details updated successfully";
-                    else if("DeleteSuccess".equals(msgParam)) display = "Item has been removed from your listings";
-                }
+            if (successMsg != null) { 
         %>
-                <div class="bg-indigo-600 text-white p-6 rounded-[2rem] mb-10 text-center font-black shadow-xl animate-bounce">
-                    <i class="fas fa-check-circle mr-2"></i> <%= display %>
-                </div>
+            <div class="bg-green-600 text-white p-6 rounded-[2rem] mb-10 text-center font-black shadow-xl animate-bounce">
+                <i class="fas fa-check-circle mr-2"></i> <%= successMsg %>
+            </div>
         <% 
                 session.removeAttribute("successMsg"); 
             } 
         %>
 
+        <%-- Statistics --%>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <div class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
                 <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Active Listings</p>
@@ -76,13 +70,12 @@
             <a href="sell-item.jsp" class="bg-slate-900 text-white px-10 py-5 rounded-[2rem] font-black shadow-xl">+ New Product</a>
         </div>
 
+        <%-- Empty State Logic --%>
         <div class="bg-white rounded-[3rem] border overflow-hidden shadow-sm">
             <% if(myItems.isEmpty()) { %>
-                <%-- EMPTY STATE --%>
                 <div class="py-20 text-center">
                     <div class="text-slate-200 text-6xl mb-6"><i class="fas fa-box-open"></i></div>
                     <p class="text-slate-400 font-black text-xl italic">You have no active listings. Start selling now!</p>
-                    <a href="sell-item.jsp" class="inline-block mt-6 text-indigo-600 font-black hover:underline">Click here to create your first item</a>
                 </div>
             <% } else { %>
                 <table class="w-full text-left">
@@ -105,40 +98,6 @@
                     </tbody>
                 </table>
             <% } %>
-        </div>
-
-        <h2 class="text-3xl font-black mb-10 pt-20 tracking-tight">Orders & Feedback</h2>
-        <div class="bg-white rounded-[3rem] border overflow-hidden shadow-sm mb-20">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50 border-b">
-                    <tr><th class="px-10 py-8 text-[10px] font-black uppercase text-slate-400">Order Detail</th><th class="px-10 py-8 text-right text-[10px] font-black uppercase text-slate-400">Action/Rating</th></tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    <% for(Order s : mySales) { %>
-                    <tr class="hover:bg-slate-50 transition duration-300">
-                        <td class="px-10 py-10">
-                            <p class="font-black text-slate-800 text-lg leading-tight"><%= s.getItemName() %></p>
-                            <p class="text-xs font-bold text-indigo-600 mt-1 uppercase">WhatsApp: <%= s.getBuyerPhone() %></p>
-                        </td>
-                        <td class="px-10 py-10 text-right">
-                            <% if("Pending".equals(s.getStatus())) { %>
-                            <div class="flex justify-end gap-3">
-                                <form action="OrderServlet" method="POST"><input type="hidden" name="action" value="updateStatus"><input type="hidden" name="orderId" value="<%= s.getOrderId() %>"><input type="hidden" name="status" value="Completed"><button class="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-black text-xs shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition">Confirm Sale</button></form>
-                                <form action="OrderServlet" method="POST"><input type="hidden" name="action" value="updateStatus"><input type="hidden" name="orderId" value="<%= s.getOrderId() %>"><input type="hidden" name="status" value="Available"><button class="bg-red-50 text-red-500 px-5 py-2.5 rounded-2xl font-black text-xs hover:bg-red-100 transition">Cancel Order</button></form>
-                            </div>
-                            <% } else if(s.isIsRated()) { %>
-                                <div class="inline-block text-left bg-yellow-50 p-4 rounded-2xl border border-yellow-100 max-w-xs">
-                                    <span class="text-[10px] font-black text-yellow-600 uppercase">Rated Transaction</span>
-                                    <p class="text-slate-700 font-bold text-xs mt-1">Feedback: "<%= s.getPaymentMethod().substring(s.getPaymentMethod().indexOf("(")+1, s.getPaymentMethod().length()-1) %>"</p>
-                                </div>
-                            <% } else { %>
-                                <span class="text-xs font-black text-slate-300 uppercase tracking-widest italic"><%= s.getStatus() %> Transaction</span>
-                            <% } %>
-                        </td>
-                    </tr>
-                    <% } %>
-                </tbody>
-            </table>
         </div>
     </div>
 </body>
