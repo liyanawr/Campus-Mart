@@ -1,9 +1,3 @@
-<%-- 
-    Document   : seller_dashboard
-    Created on : Dec 30, 2025, 2:53:12 AM
-    Author     : Afifah Isnarudin
---%>
-
 <%@page import="java.util.List, com.marketplace.dao.*, com.marketplace.model.*"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%
@@ -16,7 +10,6 @@
     double revenue = 0;
     int soldCount = 0;
     int activeListings = 0;
-    
     for(Item i : myItems) if("Available".equals(i.getStatus())) activeListings++;
     for(Order s : mySales) {
         if("Completed".equals(s.getStatus())) {
@@ -42,7 +35,27 @@
     </nav>
 
     <div class="max-w-7xl mx-auto px-10 py-12">
-        <!-- Dashboard Statistics -->
+        
+        <%-- Session Message Logic --%>
+        <% 
+            String successMsg = (String) session.getAttribute("successMsg");
+            String msgParam = request.getParameter("msg"); // Backward compatibility for previous updates
+            if (successMsg != null || "AddSuccess".equals(msgParam) || "Updated".equals(msgParam) || "DeleteSuccess".equals(msgParam)) { 
+                String display = successMsg;
+                if(display == null) {
+                    if("AddSuccess".equals(msgParam)) display = "Item listed successfully in the marketplace!";
+                    else if("Updated".equals(msgParam)) display = "Item details updated successfully";
+                    else if("DeleteSuccess".equals(msgParam)) display = "Item has been removed from your listings";
+                }
+        %>
+                <div class="bg-indigo-600 text-white p-6 rounded-[2rem] mb-10 text-center font-black shadow-xl animate-bounce">
+                    <i class="fas fa-check-circle mr-2"></i> <%= display %>
+                </div>
+        <% 
+                session.removeAttribute("successMsg"); 
+            } 
+        %>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <div class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
                 <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Active Listings</p>
@@ -64,25 +77,34 @@
         </div>
 
         <div class="bg-white rounded-[3rem] border overflow-hidden shadow-sm">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50 border-b">
-                    <tr><th class="px-10 py-8 text-[10px] font-black uppercase text-slate-400">Product Info</th><th class="px-10 py-8 text-right text-[10px] font-black uppercase text-slate-400">Manage</th></tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    <% for(Item i : myItems) { %>
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="px-10 py-10 flex items-center gap-10">
-                            <div class="w-20 h-20 bg-slate-100 rounded-3xl overflow-hidden border shadow-inner"><img src="uploads/<%= i.getItemPhoto() %>" class="w-full h-full object-cover"></div>
-                            <div><p class="font-black text-2xl text-slate-800 leading-tight mb-2"><%= i.getItemName() %></p><span class="bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase px-3 py-1 rounded-lg">Stock: <%= i.getQty() %> • RM <%= i.getPrice() %></span></div>
-                        </td>
-                        <td class="px-10 py-10 text-right space-x-3">
-                            <a href="edit-item.jsp?id=<%= i.getItemId() %>" class="inline-flex items-center justify-center w-14 h-14 bg-slate-100 text-slate-400 rounded-2xl hover:bg-indigo-600 hover:text-white transition"><i class="fas fa-edit"></i></a>
-                            <a href="DeleteServlet?id=<%= i.getItemId() %>" onclick="return confirm('Delete forever?')" class="inline-flex items-center justify-center w-14 h-14 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash-alt"></i></a>
-                        </td>
-                    </tr>
-                    <% } %>
-                </tbody>
-            </table>
+            <% if(myItems.isEmpty()) { %>
+                <%-- EMPTY STATE --%>
+                <div class="py-20 text-center">
+                    <div class="text-slate-200 text-6xl mb-6"><i class="fas fa-box-open"></i></div>
+                    <p class="text-slate-400 font-black text-xl italic">You have no active listings. Start selling now!</p>
+                    <a href="sell-item.jsp" class="inline-block mt-6 text-indigo-600 font-black hover:underline">Click here to create your first item</a>
+                </div>
+            <% } else { %>
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b">
+                        <tr><th class="px-10 py-8 text-[10px] font-black uppercase text-slate-400">Product Info</th><th class="px-10 py-8 text-right text-[10px] font-black uppercase text-slate-400">Manage</th></tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <% for(Item i : myItems) { %>
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-10 py-10 flex items-center gap-10">
+                                <div class="w-20 h-20 bg-slate-100 rounded-3xl overflow-hidden border shadow-inner"><img src="uploads/<%= i.getItemPhoto() %>" class="w-full h-full object-cover"></div>
+                                <div><p class="font-black text-2xl text-slate-800 leading-tight mb-2"><%= i.getItemName() %></p><span class="bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase px-3 py-1 rounded-lg">Stock: <%= i.getQty() %> • RM <%= i.getPrice() %></span></div>
+                            </td>
+                            <td class="px-10 py-10 text-right space-x-3">
+                                <a href="edit-item.jsp?id=<%= i.getItemId() %>" class="inline-flex items-center justify-center w-14 h-14 bg-slate-100 text-slate-400 rounded-2xl hover:bg-indigo-600 hover:text-white transition"><i class="fas fa-edit"></i></a>
+                                <a href="DeleteServlet?id=<%= i.getItemId() %>" onclick="return confirm('Are you sure you want to delete this item? This action cannot be undone.')" class="inline-flex items-center justify-center w-14 h-14 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash-alt"></i></a>
+                            </td>
+                        </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            <% } %>
         </div>
 
         <h2 class="text-3xl font-black mb-10 pt-20 tracking-tight">Orders & Feedback</h2>
