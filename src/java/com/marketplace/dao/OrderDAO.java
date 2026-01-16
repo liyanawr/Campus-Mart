@@ -129,4 +129,45 @@ public class OrderDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    public boolean createOrder(int buyerId, int itemId, String paymentMethod) {
+        Connection con = null;
+        try {
+            con = DBConnection.getConnection();
+            con.setAutoCommit(false);
+
+            // 1. Get the seller ID for the item
+            int sellerId = -1;
+            PreparedStatement psS = con.prepareStatement("SELECT seller_id FROM items WHERE item_id = ?");
+            psS.setInt(1, itemId);
+            ResultSet rs = psS.executeQuery();
+            if (rs.next()) {
+                sellerId = rs.getInt("seller_id");
+            }
+
+            // 2. Insert the order
+            String oSql = "INSERT INTO orders (buyer_id, item_id, seller_id, payment_method, status) VALUES (?, ?, ?, ?, 'Pending')";
+            PreparedStatement psO = con.prepareStatement(oSql);
+            psO.setInt(1, buyerId);
+            psO.setInt(2, itemId);
+            psO.setInt(3, sellerId);
+            psO.setString(4, paymentMethod);
+            psO.executeUpdate();
+
+            // 3. Mark item as Sold and remove from all carts
+            PreparedStatement psI = con.prepareStatement("UPDATE items SET status = 'Sold', qty = 0 WHERE item_id = ?");
+            psI.setInt(1, itemId);
+            psI.executeUpdate();
+
+            PreparedStatement psC = con.prepareStatement("DELETE FROM cart WHERE item_id = ?");
+            psC.setInt(1, itemId);
+            psC.executeUpdate();
+
+            con.commit();
+            return true;
+        } catch (Exception e) {
+            try { if(con != null) con.rollback(); } catch(Exception ex){}
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
