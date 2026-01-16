@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.marketplace.controller;
 
 import com.marketplace.dao.ItemDAO;
@@ -12,10 +7,6 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 
-/**
- *
- * @author Afifah Isnarudin
- */
 @WebServlet("/EditItemServlet")
 public class EditItemServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -24,7 +15,6 @@ public class EditItemServlet extends HttpServlet {
             int qty = Integer.parseInt(request.getParameter("qty"));
             String status = request.getParameter("status");
 
-            // Automatically update status based on quantity
             if (qty > 0 && "Sold".equals(status)) {
                 status = "Available";
             } else if (qty <= 0) {
@@ -42,6 +32,7 @@ public class EditItemServlet extends HttpServlet {
             item.setPreferredPayment(request.getParameter("preferredPayment"));
             
             if (new ItemDAO().updateItem(item)) {
+                // SUCCESS REDIRECT
                 response.sendRedirect("seller_dashboard.jsp?msg=Updated");
             } else {
                 response.sendRedirect("edit-item.jsp?id=" + itemId + "&error=Fail");
