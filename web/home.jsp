@@ -60,7 +60,7 @@
             <% for (Item i : items) { %>
                 <div class="group bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-2xl transition duration-500">
                     <div class="h-60 bg-slate-100 relative">
-                        <img src="web/uploads/<%= i.getItemPhoto() %>" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                        <img src="uploads/<%= i.getItemPhoto() %>" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
                         <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-600 shadow-sm"><%= i.getCategoryName() %></div>
                     </div>
                     <div class="p-8">
