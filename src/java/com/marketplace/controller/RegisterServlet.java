@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.marketplace.controller;
 
 import com.marketplace.dao.UserDAO;
@@ -12,22 +7,23 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 
-/**
- *
- * @author Afifah Isnarudin
- */
-
 @WebServlet("/RegisterServlet")
 public class RegisterServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            // Trim inputs to prevent accidental spacing causing unique ID violations
             String id = request.getParameter("studentId");
             String type = request.getParameter("idType");
             String name = request.getParameter("name");
             String pass = request.getParameter("password");
+            String confirmPass = request.getParameter("confirmPassword"); // New field check
             String phone = request.getParameter("phone");
+
+            // Check if passwords match
+            if (pass != null && !pass.equals(confirmPass)) {
+                response.sendRedirect("register.jsp?error=PasswordMismatch");
+                return;
+            }
 
             if (id == null || id.trim().isEmpty() || pass == null || pass.isEmpty()) {
                 response.sendRedirect("register.jsp?error=InvalidInput");
@@ -43,9 +39,10 @@ public class RegisterServlet extends HttpServlet {
 
             UserDAO dao = new UserDAO();
             if (dao.registerUser(u)) {
-                response.sendRedirect("login.jsp?msg=Registered");
+                // Success message
+                response.sendRedirect("login.jsp?status=Registered");
             } else {
-                // Returns false if DB unique constraint for identification_no is triggered
+                // Specific error for existing ID
                 response.sendRedirect("register.jsp?error=AlreadyExists");
             }
         } catch (Exception e) {
